@@ -124,6 +124,19 @@ export default (
 						update.unreadCount = (chat.unreadCount || 0) + update.unreadCount!
 					}
 
+					if(update.labels){
+						if(chat.labels){
+							for(let i = 0; i<chat.labels.length; i++){
+								const chatLabelJid = chat.labels[i].label_jid;
+								const isFind = update.labels.find(label => label.label_jid == chatLabelJid)
+								if(!isFind){
+									update.labels.push(chat.labels[i]);
+								}
+							}
+						}
+					}
+										
+
 					Object.assign(chat, update)
 				})
 				if(!result) {
@@ -260,6 +273,23 @@ export default (
 		}
 	}
 
+	const getLabels = (lables: number[]) => {
+		let result: Chat[] = [];
+		if(lables){
+			for(let chat of chats.all()){
+				const activeLabels = chat.labels?.filter(label => label.labeled)
+				for(let label of lables){
+					if(activeLabels?.find(l => l.label_jid == label)){
+						result.push(chat)
+					}
+				}
+			}
+		}else{
+			result = chats.all()
+		}
+		return result
+	}
+
 
 	return {
 		chats,
@@ -268,6 +298,7 @@ export default (
 		groupMetadata,
 		state,
 		presences,
+		getLabels,
 		bind,
 		/** loads messages from the store, if not found -- uses the legacy connection */
 		loadMessages: async(jid: string, count: number, cursor: WAMessageCursor) => {

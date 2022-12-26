@@ -34,9 +34,15 @@ export type WAPatchCreate = {
     operation: proto.SyncdMutation.SyncdOperation
 }
 
+type Labels = {
+    labeled?: boolean,
+    label_jid?: number,
+}
+
 export type Chat = proto.IConversation & {
     /** unix timestamp of when the last message was received in the chat */
     lastMessageRecvTimestamp?: number
+    labels?: Array<Labels>
 }
 
 export type ChatUpdate = Partial<Chat & {
@@ -83,6 +89,7 @@ export type ChatModification =
         lastMessages: LastMessageList
     }
     | { delete: true, lastMessages: LastMessageList }
+    | { labeled: boolean , label: string }
 
 export type InitialReceivedChatsState = {
     [jid: string]: {

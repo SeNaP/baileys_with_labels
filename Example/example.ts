@@ -57,7 +57,7 @@ const startSock = async() => {
 	})
 
 	store?.bind(sock.ev)
-
+	
 	const sendMessageWTyping = async(msg: AnyMessageContent, jid: string) => {
 		await sock.presenceSubscribe(jid)
 		await delay(500)
@@ -117,6 +117,12 @@ const startSock = async() => {
 						if(!msg.key.fromMe && doReplies) {
 							console.log('replying to', msg.key.remoteJid)
 							await sock!.readMessages([msg.key])
+
+
+							console.log(store?.getLabels([1,2]))
+							await sock!.chatModify({ labeled: false, label: '3'}, '75707@s.whatsapp.net')
+
+
 							await sendMessageWTyping({ text: 'Hello there!' }, msg.key.remoteJid!)
 						}
 					}

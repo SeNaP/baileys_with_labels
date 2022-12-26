@@ -11,6 +11,8 @@ import { downloadContentFromMessage, } from './messages-media'
 
 type FetchAppStateSyncKey = (keyId: string) => Promise<proto.Message.IAppStateSyncKeyData | null | undefined>
 
+let lastMsgLabel;
+
 export type ChatMutationMap = { [index: string]: ChatMutation }
 
 const mutationKeys = (keydata: Uint8Array) => {
@@ -605,7 +607,20 @@ export const chatModificationToAppPatch = (
 			type: 'critical_block',
 			apiVersion: 1,
 			operation: OP.SET,
-		}
+		}	
+
+	}else if('label' in mod){
+		patch = {
+			syncAction: {
+				labelAssociationAction: {
+					labeled: mod.labeled
+				}
+			},
+			index: ['label_jid', mod.label, jid],
+			type: 'regular_high',
+			apiVersion: 1,
+			operation: OP.SET,
+		}	
 	} else {
 		throw new Boom('not supported')
 	}
@@ -731,6 +746,27 @@ export const processSyncAction = (
 		if(!isInitialSync) {
 			ev.emit('chats.delete', [id])
 		}
+	}else if(action?.labelAssociationAction){
+
+		if(lastMsgLabel?.id == syncAction.index[2] && lastMsgLabel?.timestamp == action.timestamp?.toString()){
+			lastMsgLabel.labels.push({
+				labeled: action?.labelAssociationAction?.labeled,
+				label_jid: syncAction.index[1]
+			})
+		}else{
+			lastMsgLabel = { 
+				timestamp: action.timestamp?.toString(),  
+				id: syncAction.index[2],
+				labels: [{
+					labeled: action?.labelAssociationAction?.labeled,
+					label_jid: syncAction.index[1]
+				}]
+			}
+		}
+		if(lastMsgLabel)
+			setTimeout(() => {
+				ev.emit('chats.update', [lastMsgLabel]);
+			}, 1000);
 	} else {
 		logger?.debug({ syncAction, id }, 'unprocessable update')
 	}
